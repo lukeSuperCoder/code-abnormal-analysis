@@ -1,4 +1,5 @@
 let codeUtil = {
+  //获取异常代码段
   splitBadCode: function (badCode) {
     // 假设 lines 是以静态字符串数组形式模拟的文件内容
     const cCode =  badCode; // 这里填充模拟的文件内容，每一行一个字符串
@@ -75,6 +76,27 @@ let codeUtil = {
     // 调用 processLines 函数并打印结果
     const result = processLines(lines);
     return result;
+  },
+  //查找并返回两个字符之间的所有字符串片段。接受三个参数：一个字符串 s 以及两个指定的字符串 startStr 和 endStr。
+  getBetweenChars(s, startStr, endStr) {
+    const results = [];
+    let start = s.indexOf(startStr) + startStr.length;
+    while (start > startStr.length - 1) {
+        const end = s.indexOf(endStr, start);
+        if (end === -1) break;
+        results.push(s.substring(start, end));
+        start = s.indexOf(startStr, end) + startStr.length;
+    }
+    return results;
+ },
+ //格式化html文本，转义输出
+  escapeHtml(html) {
+    return html
+        .replace(/&/g, '&amp;')   // Must be done first!
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
   }
 }
 export default codeUtil;

@@ -35,6 +35,7 @@
         },
         submitCode() {
             const htmlContent = this.editor.getText();
+            // const htmlContent = ``
             let result = CodeUtil.splitBadCode(htmlContent);
             console.log(result,'res');
             this.$emit('submitCode',result);
