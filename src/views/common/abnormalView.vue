@@ -2,10 +2,10 @@
     <div class="contain">
         <div class="handel">
             <div class="error-message" v-if="data.flawLine && handelActive==='split'">
-              错误行数: 第{{ data.flawLine }} 行
+              <!-- 错误行数: 第{{ data.flawLine }} 行 -->
             </div>
             <div class="error-message" v-else-if="handelActive==='spmm'">
-              相似度: {{ this.dataRow.sppm_rate }}
+              相似度: {{ this.dataRow.similar }}
             </div>
             <div v-else-if="handelActive==='astedit'">
                 <span class="error-message">第{{ highlightIndex }}个</span>
@@ -13,7 +13,7 @@
             </div>
             <div v-else></div>
             <div class="handel-btn">
-                <el-button size="small" :type="handelActive==='split'?'primary':'default'" @click="handelBtn('split')">拆分片段</el-button>
+                <el-button size="small" :type="handelActive==='split'?'primary':'default'" @click="handelBtn('split')">函数片段</el-button>
                 <el-button size="small" :type="handelActive==='ast'?'primary':'default'" @click="handelBtn('ast')">AST</el-button>
                 <el-button size="small" :type="handelActive==='spmm'?'primary':'default'" :disabled="!isAst" @click="handelBtn('spmm')">SPMM</el-button>
                 <el-button size="small" :type="handelActive==='astedit'?'primary':'default'" :disabled="!isAst" @click="handelBtn('astedit')">AST Edit</el-button>
@@ -21,12 +21,14 @@
             </div>
         </div>
          <Editor
+             v-show="handelActive!=='spmm' && handelActive!=='astedit'"
              class="editor"
              v-model="html"
              :defaultConfig="editorConfig"
              :mode="mode"
              @onCreated="onCreated"
          />
+         <code-compare class="editor" :data="compare_data" v-show="handelActive=='spmm' || handelActive=='astedit'"></code-compare>
          <Editor
              class="editor-mini"
              v-model="htmlMini"
@@ -46,9 +48,10 @@
     import CodeData from '../../assets/data/codeData';
     import { Editor } from '@wangeditor/editor-for-vue'
     import codeUtil from '../../utils/codeUtil';
+    import codeCompare from './codeCompare.vue';
    export default {
      name: "Home",
-     components: { Editor },
+     components: { Editor, codeCompare },
      props: {
          data: {
              type: Object,
@@ -61,14 +64,14 @@
          data: {
              handler(newValue, oldValue) {
                  this.splitHtml = newValue.codeText;
-                 this.handelBtn('split');
+                //  this.handelBtn('split');
              },
              deep: true
          }
      },
      data() {
          return {
-             handelActive: 'split',
+             handelActive: '',
              isAst: false,
              editor: null,
              editorMini: null,
@@ -84,7 +87,8 @@
              asteditHtml: '',
              ddmHtml: '',
              highlightIndex: 0,
-             top5Arr: []
+             top5Arr: [],
+             compare_data: {}
          }
      },
      methods: {
@@ -132,7 +136,7 @@
                 //目前由于数据少 所以默认取第一个
                 this.dataRow = data[0];
                 index = 0;
-                this.astHtml = this.dataRow.ast;
+                this.astHtml = this.dataRow.ast_bad;
                 this.html = codeUtil.escapeHtml(this.astHtml);
                 this.isAst = true;
                 // console.log(this.editor);
@@ -140,8 +144,11 @@
             console.log(id,index,data);
          },
          getSpmmData() {
-            this.spmmHtml = this.dataRow.spmm;
-            this.html = codeUtil.escapeHtml(this.spmmHtml);
+            this.spmmHtml = {
+                ast_bad: codeUtil.escapeHtml(this.dataRow.ast_bad),
+                ast_good: codeUtil.escapeHtml(this.dataRow.ast_good),
+            };
+            this.compare_data = this.spmmHtml;
          },
          getAstEditData() {
             this.asteditHtml = this.dataRow.edits;
