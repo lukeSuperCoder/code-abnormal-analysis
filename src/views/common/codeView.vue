@@ -165,12 +165,17 @@
 // }
 
 // #endif`
-            let result = CodeUtil.splitBadCode(htmlContent);
-            console.log(result,'res');
-            this.$message.success('提交成功');
-            setTimeout(() => {
-                this.$emit('submitCode',result);
-            }, 1000);
+            if(htmlContent) {
+                let result = CodeUtil.splitBadCode(htmlContent);
+                console.log(result,'res');
+                this.$message.success('提交成功');
+                setTimeout(() => {
+                    this.$emit('submitCode',result);
+                }, 1000);
+            } else {
+                this.$message.error('请输入代码');
+            }
+            
         }
     },
     mounted() {
