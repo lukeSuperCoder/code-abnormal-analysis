@@ -7,9 +7,9 @@
             <div class="error-message" v-else-if="handelActive==='spmm'">
               相似度: {{ this.dataRow.similar }}
             </div>
-            <div v-else-if="handelActive==='astedit'">
-                <span class="error-message">第{{ highlightIndex }}个</span>
-                <el-button size="small" type="primary" @click="nextStep('astedit')">下一个</el-button>
+            <div v-else-if="handelActive==='token' || handelActive==='ddm'">
+                <span class="error-message">Top-{{ highlightIndex+1 }}</span>
+                <el-button style="margin-left: 10px;" size="small" type="primary" @click="nextStep()">下一个</el-button>
             </div>
             <div v-else></div>
             <div class="handel-btn">
@@ -17,6 +17,7 @@
                 <el-button size="small" :type="handelActive==='ast'?'primary':'default'" @click="handelBtn('ast')">AST</el-button>
                 <el-button size="small" :type="handelActive==='spmm'?'primary':'default'" :disabled="!isAst" @click="handelBtn('spmm')">SPMM</el-button>
                 <el-button size="small" :type="handelActive==='astedit'?'primary':'default'" :disabled="!isAst" @click="handelBtn('astedit')">AST Edit</el-button>
+                <el-button size="small" :type="handelActive==='token'?'primary':'default'" :disabled="!isAst" @click="handelBtn('token')">Token</el-button>
                 <el-button size="small" :type="handelActive==='ddm'?'primary':'default'" :disabled="!isAst" @click="handelBtn('ddm')">DDM</el-button>
             </div>
         </div>
@@ -88,30 +89,61 @@
              ddmHtml: '',
              highlightIndex: 0,
              top5Arr: [],
-             compare_data: {}
+             compare_data: {},
+             loading: null,
+             load_text_map: {
+                split: '函数片段',
+                ast: 'AST',
+                spmm: 'SPMM',
+                astedit: 'AST Edit',
+                token: 'Token',
+                ddm: 'DDM'
+             }
          }
      },
      methods: {
          handelBtn(type) {
             this.handelActive = type;
             this.html = '';
-            switch(type) {
-                case 'split':
-                    this.html = this.splitHtml;
-                    break;
-                case 'ast':
-                    this.getAstData();
-                    break;
-                case 'spmm':
-                    this.getSpmmData();
-                    break;
-                case 'astedit':
-                    this.getAstEditData();
-                    break;
-                case 'ddm':
-                    
-                    break;
-            }
+            this.htmlMini = '';
+            this.load(type).then(() => {
+                switch(type) {
+                    case 'split':
+                        this.html = this.splitHtml;
+                        break;
+                    case 'ast':
+                        this.getAstData();
+                        break;
+                    case 'spmm':
+                        this.getSpmmData();
+                        break;
+                    case 'astedit':
+                        this.getAstEditData();
+                        break;
+                    case 'token':
+                        this.getTokenData();
+                        break;
+                    case 'ddm':
+                        this.getDdmData();
+                        break;
+                }
+            });
+         },
+         load(text) {
+            //生成一个1-3的随机数
+            let num = Math.floor(Math.random() * 3 + 2);
+            this.loading = this.$loading({
+                lock: true,
+                text: '正在进行'+this.load_text_map[text]+'计算中，请稍后...',
+                spinner: 'el-icon-loading',
+                background: 'rgba(0, 0, 0, 0.7)'
+            });
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    this.loading.close();
+                    resolve();
+                }, num*1000);
+            });
          },
          onCreated(editor) {
              this.editor = Object.seal(editor) // 一定要用 Object.seal() ，否则会报错
@@ -153,29 +185,42 @@
          getAstEditData() {
             this.asteditHtml = this.dataRow.edits;
             this.htmlMini = this.asteditHtml;
-            this.html = this.splitHtml;
-            this.highlightIndex = 0;
-            this.top5Arr = this.dataRow.edits_top5;
-            this.nextStep();
          },
-         nextStep(type) {
-            let cur_high = this.top5Arr[this.highlightIndex].split(',');
+         nextStep() {
+            if(this.highlightIndex>=this.top5Arr.length-1) {
+                this.highlightIndex = 0;
+            } else {
+                this.highlightIndex++;
+            }
+            this.getTopData(this.highlightIndex)
+         },
+         getTopData(index) {
+            let cur_high = this.top5Arr[index].split(',');
             let code_arr = this.splitHtml.split('\n');
             let str = code_arr[parseInt(cur_high[1])-1];
             if(str.indexOf(cur_high[0])>-1) {
                 let start = str.indexOf(cur_high[0]);
                 let end = start + cur_high[0].length;
-                let newStr = str.substring(0,start) + '<span style="color:red">' + str.substring(start,end) + '</span>' + str.substring(end);
+                let newStr = str.substring(0,start) + '<span style="color:red;font-size: 22px;">' + str.substring(start,end) + '</span>' + str.substring(end);
                 code_arr[parseInt(cur_high[1])-1] = newStr;
             }
             else {
             }
             this.html = code_arr.join('\n');
-            if(this.highlightIndex>4) {
-                this.highlightIndex = 1;
-            } else {
-                this.highlightIndex++;
-            }
+         },
+         getTokenData() {
+            this.html = this.splitHtml;
+            this.htmlMini = JSON.stringify(this.dataRow.edits_top5);
+            this.highlightIndex = 0;
+            this.top5Arr = this.dataRow.edits_top5;
+            this.getTopData(this.highlightIndex)
+         },
+         getDdmData() {
+            this.html = this.splitHtml;
+            this.htmlMini = JSON.stringify(this.dataRow.dmm_line)+'\n'+JSON.stringify(this.dataRow.dmm_top5);
+            this.highlightIndex = 0;
+            this.top5Arr = this.dataRow.dmm_top5;
+            this.getTopData(this.highlightIndex)
          }
      },
      mounted() {
