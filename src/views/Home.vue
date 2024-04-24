@@ -38,8 +38,8 @@ export default {
 </script>
 <style lang="scss" scoped>
 .main {
-  width: 80vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   .card {
     width: 100%;
     height: 100%;
