@@ -5,7 +5,7 @@
               <!-- 错误行数: 第{{ data.flawLine }} 行 -->
             </div>
             <div class="error-message" v-else-if="handelActive==='spmm'">
-              相似度: {{ this.dataRow.similar }}
+              相似度: {{ this.dataRow.similar.toFixed(3) }}
             </div>
             <div v-else-if="handelActive==='token' || handelActive==='ddm'">
                 <span class="error-message">Top-{{ highlightIndex+1 }}</span>
@@ -156,24 +156,28 @@
             //  console.log(this.editor.getHtml())
          },
          getAstData() {
+
             let fun_name = this.splitHtml.split('\n')[0];
             console.log(fun_name);
-            let id = CodeUtil.getBetweenChars(fun_name, 'CWE', '_')[0]; //获取文件名
-            let index = parseInt(CodeUtil.getBetweenChars(fun_name, 'cpy_', '_')[0]); //获取序号
+            let filename = CodeUtil.getBetweenChars(fun_name, 'CWE', '_')[0]; //获取文件名
+            let id = CodeUtil.extractContentBeforeBad(fun_name); //获取序号
             let data = CodeData.filter((item) => {
-                return item.fileName === id;
+                return item.fileName+'' === filename;
             })
             //获取到了对应的数据集，根据序号获取对应数据项
             if(data.length>0) {
                 //目前由于数据少 所以默认取第一个
-                this.dataRow = data[0];
-                index = 0;
-                this.astHtml = this.dataRow.ast_bad;
-                this.html = codeUtil.escapeHtml(this.astHtml);
-                this.isAst = true;
+                let res = data.filter(i => i.id+'' === id);
+                if(res.length>0) {
+                    this.dataRow = res[0];
+                    this.astHtml = this.dataRow.ast_bad;
+                    this.html = codeUtil.escapeHtml(this.astHtml);
+                    this.isAst = true;
+                } else {
+                    this.$message.error('未识别到数据');
+                }
                 // console.log(this.editor);
             }
-            console.log(id,index,data);
          },
          getSpmmData() {
             this.spmmHtml = {
@@ -206,7 +210,7 @@
             }
             else {
             }
-            this.html = code_arr.join('\n');
+            this.html = codeUtil.addLineNumbers(code_arr.join('\n'));
          },
          getTokenData() {
             this.html = this.splitHtml;
@@ -217,7 +221,7 @@
          },
          getDdmData() {
             this.html = this.splitHtml;
-            this.htmlMini = JSON.stringify(this.dataRow.dmm_line)+'\n'+JSON.stringify(this.dataRow.dmm_top5);
+            this.htmlMini = JSON.stringify(this.dataRow.dmm_line)+'\n'+JSON.stringify(this.dataRow.dmm_line_r)+'\n'+JSON.stringify(this.dataRow.dmm_top5);
             this.highlightIndex = 0;
             this.top5Arr = this.dataRow.dmm_top5;
             this.getTopData(this.highlightIndex)

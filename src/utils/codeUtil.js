@@ -97,6 +97,24 @@ let codeUtil = {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
-  }
+  },
+  //匹配id
+  extractContentBeforeBad(functionName) {
+    var pattern = /_([^_]+)_bad\(\)$/;
+    var match = functionName.match(pattern);
+    if (match) {
+        return match[1]; // 返回匹配的部分
+    } else {
+        return null;
+    }
+  },
+  //添加行号
+  addLineNumbers(code) {
+    var lines = code.split('\n');
+    var numberedLines = lines.map((line, index) => {
+      return (index + 1) + ' \t' + line;
+    });
+    return numberedLines.join('\n');
+  },
 }
 export default codeUtil;
