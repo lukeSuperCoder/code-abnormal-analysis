@@ -4,7 +4,7 @@
             <div class="error-message" v-if="data.flawLine && handelActive==='split'">
               <!-- 错误行数: 第{{ data.flawLine }} 行 -->
             </div>
-            <div class="error-message" v-else-if="handelActive==='spmm'">
+            <div class="error-message" v-else-if="handelActive==='spmm' && !loading.visible">
               相似度: {{ this.dataRow.similar.toFixed(3) }}
             </div>
             <div v-else-if="handelActive==='token' || handelActive==='ddm'">
