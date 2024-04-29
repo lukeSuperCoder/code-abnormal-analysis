@@ -156,7 +156,6 @@
             //  console.log(this.editor.getHtml())
          },
          getAstData() {
-
             let fun_name = this.splitHtml.split('\n')[0];
             console.log(fun_name);
             let filename = CodeUtil.getBetweenChars(fun_name, 'CWE', '_')[0]; //获取文件名
@@ -167,7 +166,12 @@
             //获取到了对应的数据集，根据序号获取对应数据项
             if(data.length>0) {
                 //目前由于数据少 所以默认取第一个
-                let res = data.filter(i => i.id+'' === id);
+                let res = data.filter(i => {
+                    if(i.id<10) {
+                        i.id = '0'+i.id;
+                    }
+                    return i.id+'' === id
+                });
                 if(res.length>0) {
                     this.dataRow = res[0];
                     this.astHtml = this.dataRow.ast_bad;
